@@ -1,0 +1,19 @@
+{
+  "name": "notification-cleanup",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "private": true,
+  "scripts": {
+    "start": "node index.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jack Westbrook <jack.westbrook@gmail.com>",
+  "license": "MIT",
+  "description": "A simple script to cleanup Github PR notifications",
+  "dependencies": {
+    "@octokit/rest": "^22.0.0"
+  },
+  "engines": {
+    "node": ">=22.16.0"
+  }
+}
