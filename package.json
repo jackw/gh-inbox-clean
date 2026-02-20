@@ -1,10 +1,12 @@
 {
   "name": "notification-cleanup",
   "version": "1.0.0",
-  "main": "index.mjs",
+  "main": "index.ts",
+  "type": "module",
   "private": true,
   "scripts": {
-    "start": "node index.mjs",
+    "start": "node index.ts",
+    "typecheck": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jack Westbrook <jack.westbrook@gmail.com>",
@@ -14,6 +16,12 @@
     "@octokit/rest": "^22.0.0"
   },
   "engines": {
-    "node": ">=22.16.0"
+    "node": ">=24.13.0"
+  },
+  "devDependencies": {
+    "@tsconfig/node24": "^24.0.4",
+    "@tsconfig/recommended": "^1.0.13",
+    "@types/node": "^24.10.13",
+    "typescript": "^5.9.3"
   }
 }
