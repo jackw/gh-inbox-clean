@@ -57,9 +57,9 @@ async function withRateLimitRetry<T>(
       if (attempt === maxRetries || !isRateLimitError(error)) {
         throw error;
       }
-      const retryAfter = error.response?.headers?.["retry-after"];
-      const delay = retryAfter
-        ? Number(retryAfter) * 1000
+      const retryAfter = Number(error.response?.headers?.["retry-after"]);
+      const delay = !Number.isNaN(retryAfter)
+        ? retryAfter * 1000
         : baseDelay * 2 ** attempt;
       log.info(`Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
       await new Promise((resolve) => setTimeout(resolve, delay));
@@ -133,7 +133,9 @@ async function main(): Promise<void> {
   }
 
   const github = new Octokit({ auth: tokenResult.token });
-  const login = await getAuthenticatedLogin(github);
+  const login = await withRateLimitRetry(() =>
+    getAuthenticatedLogin(github),
+  );
   const teamSlugs = getTeamSlugs();
 
   const cleared: string[] = [];
@@ -143,40 +145,45 @@ async function main(): Promise<void> {
     { all: true },
   )) {
     for (const notification of notifications) {
-      if (notification.subject.type !== "PullRequest") {
-        continue;
+      try {
+        if (notification.subject.type !== "PullRequest") {
+          continue;
+        }
+
+        const subjectUrl = notification.subject.url;
+
+        if (!subjectUrl) {
+          continue;
+        }
+
+        const { owner, repo, pull_number } = parsePullRequestUrl(subjectUrl);
+
+        const { data: pr } = await withRateLimitRetry(() =>
+          github.pulls.get({ owner, repo, pull_number }),
+        );
+
+        const isReviewer = pr.requested_reviewers?.some(
+          (r) => r.login === login,
+        );
+        const isTeamReviewer =
+          teamSlugs.length > 0 &&
+          pr.requested_teams?.some((t) => teamSlugs.includes(t.slug));
+
+        if (pr.state !== "closed" && (isReviewer || isTeamReviewer)) {
+          continue;
+        }
+
+        await withRateLimitRetry(() =>
+          github.activity.markThreadAsDone({
+            thread_id: Number(notification.id),
+          }),
+        );
+
+        cleared.push(pr.html_url);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        log.error(`Failed to process notification ${notification.id}: ${message}`);
       }
-
-      const subjectUrl = notification.subject.url;
-
-      if (!subjectUrl) {
-        continue;
-      }
-
-      const { owner, repo, pull_number } = parsePullRequestUrl(subjectUrl);
-
-      const { data: pr } = await withRateLimitRetry(() =>
-        github.pulls.get({ owner, repo, pull_number }),
-      );
-
-      const isReviewer = pr.requested_reviewers?.some(
-        (r) => r.login === login,
-      );
-      const isTeamReviewer =
-        teamSlugs.length > 0 &&
-        pr.requested_teams?.some((t) => teamSlugs.includes(t.slug));
-
-      if (pr.state !== "closed" && (isReviewer || isTeamReviewer)) {
-        continue;
-      }
-
-      await withRateLimitRetry(() =>
-        github.activity.markThreadAsDone({
-          thread_id: Number(notification.id),
-        }),
-      );
-
-      cleared.push(pr.html_url);
     }
   }
 
