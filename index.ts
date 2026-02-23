@@ -36,10 +36,7 @@ Options:
   -h, --help        Show this help message
   -v, --version     Show version number
   -d, --dry-run     Preview what would be cleared without making changes
-  -t, --teams       Comma-separated team slugs to keep notifications for
-
-Environment variables:
-  NOTIFICATION_CLEANUP_TEAMS   Comma-separated team slugs (fallback for --teams)`);
+  -t, --teams       Comma-separated team slugs to keep notifications for`);
 }
 
 function parseCliArgs(): CliOptions {
@@ -53,9 +50,7 @@ function parseCliArgs(): CliOptions {
     strict: true,
   });
 
-  const teamsArg = values.teams ?? "";
-  const teamsEnv = process.env.NOTIFICATION_CLEANUP_TEAMS ?? "";
-  const teamsRaw = teamsArg || teamsEnv;
+  const teamsRaw = values.teams ?? "";
 
   return {
     help: values.help ?? false,

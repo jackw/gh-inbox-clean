@@ -38,9 +38,3 @@ Keep notifications where specific teams are requested reviewers:
 ```sh
 npx github-notification-clean --teams my-team,other-team
 ```
-
-The `--teams` flag can also be set via the `NOTIFICATION_CLEANUP_TEAMS` environment variable:
-
-```sh
-NOTIFICATION_CLEANUP_TEAMS=my-team,other-team npx github-notification-clean
-```

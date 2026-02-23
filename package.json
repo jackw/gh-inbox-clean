@@ -17,6 +17,7 @@
   "license": "MIT",
   "description": "CLI to cleanup GitHub PR notifications you no longer need to review",
   "dependencies": {
+    "@octokit/request-error": "^7.0.0",
     "@octokit/rest": "^22.0.0"
   },
   "engines": {
