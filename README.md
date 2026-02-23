@@ -15,3 +15,9 @@ Make sure you are logged into GH via the gh cli.
 Then install dependencies and run the script.
 
 `npm i && npm run start`
+
+### Team notifications
+
+To also keep notifications where your team is a requested reviewer, set the `NOTIFICATION_CLEANUP_TEAMS` env var with a comma-separated list of team slugs:
+
+`NOTIFICATION_CLEANUP_TEAMS=my-team,other-team npm run start`
