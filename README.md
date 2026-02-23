@@ -1,23 +1,46 @@
-# Github notifications cleanup
+# github-notification-clean
 
-This script uses the GH api to iterate over notifcations and close any for pull requests that have been merged / closed.
+CLI to cleanup GitHub PR notifications you no longer need to review. Marks notifications as done for PRs that are closed or where you are no longer a requested reviewer.
 
-You must have the gh cli installed and auth'd for this to work.
+## Prerequisites
+
+You must have the [GitHub CLI](https://cli.github.com/) installed and authenticated:
+
+```sh
+gh auth login
+```
 
 ## Usage
 
-Clone the repo somewhere.
+```sh
+npx github-notification-clean
+```
 
-Make sure you are logged into GH via the gh cli.
+### Options
 
-`gh auth login`
+```
+-h, --help        Show help message
+-v, --version     Show version number
+-d, --dry-run     Preview what would be cleared without making changes
+-t, --teams       Comma-separated team slugs to keep notifications for
+```
 
-Then install dependencies and run the script.
+### Examples
 
-`npm i && npm run start`
+Preview what would be cleared:
 
-### Team notifications
+```sh
+npx github-notification-clean --dry-run
+```
 
-To also keep notifications where your team is a requested reviewer, set the `NOTIFICATION_CLEANUP_TEAMS` env var with a comma-separated list of team slugs:
+Keep notifications where specific teams are requested reviewers:
 
-`NOTIFICATION_CLEANUP_TEAMS=my-team,other-team npm run start`
+```sh
+npx github-notification-clean --teams my-team,other-team
+```
+
+The `--teams` flag can also be set via the `NOTIFICATION_CLEANUP_TEAMS` environment variable:
+
+```sh
+NOTIFICATION_CLEANUP_TEAMS=my-team,other-team npx github-notification-clean
+```
