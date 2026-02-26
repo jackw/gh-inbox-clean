@@ -1,27 +1,33 @@
 {
-  "name": "notification-cleanup",
+  "name": "github-notification-clean",
   "version": "1.0.0",
-  "main": "index.ts",
   "type": "module",
-  "private": true,
+  "bin": "./dist/cli.mjs",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "start": "node index.ts",
+    "build": "rolldown -c rolldown.config.ts",
+    "prepublishOnly": "npm run build",
     "typecheck": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jack Westbrook <jack.westbrook@gmail.com>",
   "license": "MIT",
-  "description": "A simple script to cleanup Github PR notifications",
+  "description": "CLI to cleanup GitHub PR notifications you no longer need to review",
   "dependencies": {
+    "@octokit/request-error": "^7.0.0",
     "@octokit/rest": "^22.0.0"
   },
   "engines": {
-    "node": ">=24.13.0"
+    "node": ">=20.0.0"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.4",
     "@tsconfig/recommended": "^1.0.13",
     "@types/node": "^24.10.13",
+    "rolldown": "1.0.0-rc.5",
     "typescript": "^5.9.3"
   }
 }

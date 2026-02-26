@@ -1,7 +1,10 @@
 import { Octokit } from "@octokit/rest";
 import { RequestError } from "@octokit/request-error";
 import { execFile as nodeExecFile } from "node:child_process";
-import { promisify } from "node:util";
+import { promisify, parseArgs } from "node:util";
+
+declare const __VERSION__: string;
+const VERSION = __VERSION__;
 
 const execFile = promisify(nodeExecFile);
 
@@ -9,6 +12,56 @@ const log = {
   info: (msg: string) => process.stdout.write(`${msg}\n`),
   error: (msg: string) => process.stderr.write(`${msg}\n`),
 };
+
+interface CliOptions {
+  help: boolean;
+  version: boolean;
+  dryRun: boolean;
+  teams: string[];
+}
+
+function printHelp(): void {
+  log.info(`github-notification-clean v${VERSION}
+
+Cleanup GitHub PR notifications you no longer need to review.
+Marks notifications as done for PRs that are closed or where
+you are no longer a requested reviewer.
+
+Requires the GitHub CLI (gh) to be installed and authenticated.
+
+Usage:
+  npx github-notification-clean [options]
+
+Options:
+  -h, --help        Show this help message
+  -v, --version     Show version number
+  -d, --dry-run     Preview what would be cleared without making changes
+  -t, --teams       Comma-separated team slugs to keep notifications for`);
+}
+
+function parseCliArgs(): CliOptions {
+  const { values } = parseArgs({
+    options: {
+      help: { type: "boolean", short: "h", default: false },
+      version: { type: "boolean", short: "v", default: false },
+      "dry-run": { type: "boolean", short: "d", default: false },
+      teams: { type: "string", short: "t", default: "" },
+    },
+    strict: true,
+  });
+
+  const teamsRaw = values.teams ?? "";
+
+  return {
+    help: values.help ?? false,
+    version: values.version ?? false,
+    dryRun: values["dry-run"] ?? false,
+    teams: teamsRaw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  };
+}
 
 interface TokenSuccess {
   succeeded: true;
@@ -58,7 +111,7 @@ async function withRateLimitRetry<T>(
         throw error;
       }
       const retryAfter = Number(error.response?.headers?.["retry-after"]);
-      const delay = !Number.isNaN(retryAfter)
+      const delay = !Number.isNaN(retryAfter) && retryAfter > 0
         ? retryAfter * 1000
         : baseDelay * 2 ** attempt;
       log.info(`Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})...`);
@@ -114,18 +167,19 @@ async function getAuthenticatedLogin(github: Octokit): Promise<string> {
   }
 }
 
-function getTeamSlugs(): string[] {
-  const teams = process.env.NOTIFICATION_CLEANUP_TEAMS;
-  if (!teams) {
-    return [];
-  }
-  return teams
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
 async function main(): Promise<void> {
+  const options = parseCliArgs();
+
+  if (options.help) {
+    printHelp();
+    return;
+  }
+
+  if (options.version) {
+    log.info(VERSION);
+    return;
+  }
+
   const tokenResult = await getGithubToken();
 
   if (!tokenResult.succeeded) {
@@ -136,7 +190,10 @@ async function main(): Promise<void> {
   const login = await withRateLimitRetry(() =>
     getAuthenticatedLogin(github),
   );
-  const teamSlugs = getTeamSlugs();
+
+  if (options.dryRun) {
+    log.info(`Dry run mode — no notifications will be marked as done.`);
+  }
 
   const cleared: string[] = [];
 
@@ -166,18 +223,20 @@ async function main(): Promise<void> {
           (r) => r.login === login,
         );
         const isTeamReviewer =
-          teamSlugs.length > 0 &&
-          pr.requested_teams?.some((t) => teamSlugs.includes(t.slug));
+          options.teams.length > 0 &&
+          pr.requested_teams?.some((t) => options.teams.includes(t.slug));
 
         if (pr.state !== "closed" && (isReviewer || isTeamReviewer)) {
           continue;
         }
 
-        await withRateLimitRetry(() =>
-          github.activity.markThreadAsDone({
-            thread_id: Number(notification.id),
-          }),
-        );
+        if (!options.dryRun) {
+          await withRateLimitRetry(() =>
+            github.activity.markThreadAsDone({
+              thread_id: Number(notification.id),
+            }),
+          );
+        }
 
         cleared.push(pr.html_url);
       } catch (error: unknown) {
@@ -190,7 +249,9 @@ async function main(): Promise<void> {
   if (cleared.length > 0) {
     log.info(cleared.join("\n"));
   }
-  log.info(`${cleared.length} PR notifications cleared!`);
+
+  const suffix = options.dryRun ? " (dry run)" : "";
+  log.info(`${cleared.length} PR notifications cleared!${suffix}`);
 }
 
 main().catch((error: unknown) => {
