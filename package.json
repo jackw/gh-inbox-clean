@@ -1,5 +1,5 @@
 {
-  "name": "github-notification-clean",
+  "name": "gh-inbox-clean",
   "version": "1.0.0",
   "type": "module",
   "bin": "./dist/cli.mjs",
