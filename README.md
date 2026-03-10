@@ -1,4 +1,4 @@
-# github-notification-clean
+# gh-inbox-clean
 
 CLI to cleanup GitHub PR notifications you no longer need to review. Marks notifications as done for PRs that are closed or where you are no longer a requested reviewer.
 
@@ -13,7 +13,7 @@ gh auth login
 ## Usage
 
 ```sh
-npx github-notification-clean
+npx gh-inbox-clean
 ```
 
 ### Options
@@ -30,11 +30,11 @@ npx github-notification-clean
 Preview what would be cleared:
 
 ```sh
-npx github-notification-clean --dry-run
+npx gh-inbox-clean --dry-run
 ```
 
 Keep notifications where specific teams are requested reviewers:
 
 ```sh
-npx github-notification-clean --teams my-team,other-team
+npx gh-inbox-clean --teams my-team,other-team
 ```

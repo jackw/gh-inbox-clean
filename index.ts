@@ -17,7 +17,7 @@ interface CliOptions {
 }
 
 function printHelp(): void {
-  process.stdout.write(`github-notification-clean v${VERSION}
+  process.stdout.write(`gh-inbox-clean v${VERSION}
 
 Cleanup GitHub PR notifications you no longer need to review.
 Marks notifications as done for PRs that are closed or where
@@ -26,7 +26,7 @@ you are no longer a requested reviewer.
 Requires the GitHub CLI (gh) to be installed and authenticated.
 
 Usage:
-  npx github-notification-clean [options]
+  npx gh-inbox-clean [options]
 
 Options:
   -h, --help        Show this help message
