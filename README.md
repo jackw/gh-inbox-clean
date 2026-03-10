@@ -15,6 +15,14 @@ gh auth login
 ```sh
 npx gh-inbox-clean
 ```
+or
+
+```sh
+npx -y gh-inbox-clean
+```
+
+if you want to bypass confirmation
+
 
 ### Options
 
