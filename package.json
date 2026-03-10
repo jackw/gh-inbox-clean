@@ -2,7 +2,9 @@
   "name": "gh-inbox-clean",
   "version": "1.0.0",
   "type": "module",
-  "bin": "./dist/cli.mjs",
+  "bin": {
+    "gh-inbox-clean": "dist/cli.mjs"
+  },
   "files": [
     "dist"
   ],
